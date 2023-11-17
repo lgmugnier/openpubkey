@@ -14,26 +14,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
-    - name: Check input is greater than current version
-      id: version_check
-      uses: actions/github-script@v5
+    - name: Get current version
+      id: current-version
+      run: echo "::set-output name=tag::$(git describe --tags `git rev-list --tags --max-count=1`)"
+
+    - uses: jackbilestech/semver-compare@1.0.4
       with:
-        script: |
-          const semver = require('semver');
-          const versionInput = '${{ inputs.version }}';
-          const latestRelease = await github.rest.repos.getLatestRelease({
-            owner: context.repo.owner,
-            repo: context.repo.repo
-          });
-          const latestVersion = latestRelease.data.tag_name;
-          console.log(`Latest version: ${latestVersion}, New version: ${versionInput}`);
-          if (semver.gt(versionInput, latestVersion)) {
-            core.setOutput('new_version', versionInput);
-            return;
-          }
-          core.setFailed('New version is not greater than the latest version.');
+        head: ${{ inputs.version }}
+        base: ${{ steps.current-version.outputs.tag }}
+        operator: '>'
 
     - name: Batch changes
       uses: miniscruff/changie-action@6dcc2533cac0495148ed4046c438487e4dceaa23 # v2.0.0
@@ -67,4 +58,4 @@ jobs:
     if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true && github.event.pull_request.title == 'Release ${{ inputs.version }}'
     steps:
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
