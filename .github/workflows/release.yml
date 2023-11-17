@@ -15,10 +15,15 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v3
+      with:
+        fetch-depth: 0 # Fetches all history for all branches and tags
 
     - name: Get current version
       id: current-version
       run: echo "::set-output name=tag::$(git describe --tags `git rev-list --tags --max-count=1`)"
+
+    - name: Print the current version
+      run: echo "The current version is ${{ steps.get-latest-tag.outputs.tag }}"
 
     - uses: jackbilestech/semver-compare@1.0.4
       with:
