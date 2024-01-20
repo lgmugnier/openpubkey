@@ -7,14 +7,15 @@ import (
 
 	"github.com/awnumar/memguard"
 	"github.com/lestrrat-go/jwx/v2/jwa"
+	"github.com/lestrrat-go/jwx/v2/jws"
 	"github.com/lestrrat-go/jwx/v2/jwt"
 	"github.com/lestrrat-go/jwx/v2/jwt/openid"
 	"github.com/openpubkey/openpubkey/util"
 )
 
 const (
-	issuer   = "me"
-	audience = "also_me"
+	MockIssuer   = "me"
+	MockAudience = "also_me"
 )
 
 type MockOpenIdProvider struct {
@@ -42,8 +43,8 @@ func (m *MockOpenIdProvider) RequestTokens(ctx context.Context, cicHash string) 
 	token.Set("email", "arthur.aardvark@example.com")
 
 	// Required token payload values for OpenID
-	token.Set(jwt.IssuerKey, issuer)
-	token.Set(jwt.AudienceKey, audience)
+	token.Set(jwt.IssuerKey, MockIssuer)
+	token.Set(jwt.AudienceKey, MockAudience)
 	token.Set(jwt.IssuedAtKey, time.Now().Unix())
 	token.Set(jwt.ExpirationKey, time.Now().Add(24*time.Hour).Unix())
 	token.Set(jwt.SubjectKey, "1234567890")
@@ -56,7 +57,11 @@ func (m *MockOpenIdProvider) RequestTokens(ctx context.Context, cicHash string) 
 	return memguard.NewBufferFromBytes(signedToken), nil
 }
 
-func (m *MockOpenIdProvider) PublicKey(ctx context.Context, idt []byte) (crypto.PublicKey, error) {
+func (m *MockOpenIdProvider) Issuer() string {
+	return MockIssuer
+}
+
+func (m *MockOpenIdProvider) PublicKey(ctx context.Context, headers jws.Headers) (crypto.PublicKey, error) {
 	return m.signer.Public(), nil
 }
 
